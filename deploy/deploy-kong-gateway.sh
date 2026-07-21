@@ -2,23 +2,45 @@
 set -e
 
 ENV_NAME=$1
-CERT_FILE=$2
-KEY_FILE=$3
-if [ -z "$ENV_NAME" ] || [ -z "$CERT_FILE" ] || [ -z "$KEY_FILE" ]; then
-  echo "Usage: ./deploy-kong-gateway.sh <env> <tls.crt path> <tls.key path>"
+if [ -z "$ENV_NAME" ]; then
+  echo "Usage: ./deploy-kong-gateway.sh <env>"
   exit 1
 fi
 
 source ../env/${ENV_NAME}.env
 MANIFEST_DIR=../manifests/gateway
 
+# --- Hardcoded cert/key (test values — rotate before real use) ---
+CERT_DATA='-----BEGIN CERTIFICATE-----
+MIICQTCCAeigAwIBAgIBATAKBggqhkjOPQQDBDBSMVAwCQYDVQQGEwJJTjBDBgNV
+BAMePABrAG8AbgBuAGUAYwB0AC0AYQBtAGEAbgBfAGIAXwBvAHAAZQByAGEAdABv
+AHIAXwBzAGUAYwBvAG4AZDAeFw0yNjA3MjAxNzQzMDZaFw0zNjA3MjAxNzQzMDZa
+MFIxUDAJBgNVBAYTAklOMEMGA1UEAx48AGsAbwBuAG4AZQBjAHQALQBhAG0AYQBu
+AF8AYgBfAG8AcABlAHIAYQB0AG8AcgBfAHMAZQBjAG8AbgBkMFkwEwYHKoZIzj0C
+AQYIKoZIzj0DAQcDQgAEcVpqTGgtqZpEr5ciYX16hIceKVIhRWlvI3vlnLuOIAXr
+xmtN084yFmcsGpGNe/eQL9bYY0SKSwp6G/1Ye7qhXqOBrjCBqzAMBgNVHRMBAf8E
+AjAAMAsGA1UdDwQEAwIABjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw
+FwYJKwYBBAGCNxQCBAoMCGNlcnRUeXBlMCMGCSsGAQQBgjcVAgQWBBQBAQEBAQEB
+AQEBAQEBAQEBAQEBATAcBgkrBgEEAYI3FQcEDzANBgUpAQEBAQIBCgIBFDATBgkr
+BgEEAYI3FQEEBgIEABQACjAKBggqhkjOPQQDBANHADBEAiBQnNr0VMnY8789pPGS
+8UDoBsPY0qH61687URvZBgDSmQIgbVOjIUICIiF92rr1kVJzzJH9Bnxl2kdtSk1r
+3ruKWWM=
+-----END CERTIFICATE-----'
+
+KEY_DATA='-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgxiy+djYOD3PNmqoW
+ZbKImDkooH1rXgTluXzzAVD7gASgCgYIKoZIzj0DAQehRANCAARxWmpMaC2pmkSv
+lyJhfXqEhx4pUiFFaW8je+Wcu44gBevGa03TzjIWZywakY1795Av1thjRIpLCnob
+/Vh7uqFe
+-----END PRIVATE KEY-----'
+
 echo "Creating namespace $NAMESPACE..."
 kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
 echo "Creating cert secret $CLUSTER_CERT_SECRET_NAME..."
 kubectl create secret generic $CLUSTER_CERT_SECRET_NAME \
-  --from-file=tls.crt=$CERT_FILE \
-  --from-file=tls.key=$KEY_FILE \
+  --from-literal=tls.crt="$CERT_DATA" \
+  --from-literal=tls.key="$KEY_DATA" \
   -n $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
 echo "Applying GatewayConfiguration..."
