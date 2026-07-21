@@ -54,7 +54,3 @@ spec:
             - name: kong-cluster-cert
               secret:
                 secretName: CERT_SECRET_NAME_PLACEHOLDER
-  network:
-    services:
-      ingress:
-        type: INGRESS_SERVICE_TYPE_PLACEHOLDER
